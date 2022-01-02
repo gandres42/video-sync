@@ -38,13 +38,17 @@
     </script>
 
     <script>
-        let room = null;
-        let url = null;
-        let buffer_action = null;
-        let buffer_time = null;
-        let time = http_get();
-        console.log(time);
-        setInterval(check_time_actions, 1);
+        window.onload
+        {
+            var room = null;
+            var url = null;
+            var buffer_action = null;
+            var buffer_time = null;
+            var time = http_get();
+            console.log(time);
+            setInterval(check_time_actions, 1);
+        }
+
 
         database.ref('/rooms/').on('value', (snapshot) => {
             if (snapshot.val()[room] != null)
