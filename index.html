@@ -84,8 +84,8 @@
                 room = room_code;
                 database.ref('/rooms/' + room).get().then((snapshot) => {
                     url = snapshot.val().url;
+                    create_iframe();
                 });
-                create_iframe();
             }
         }
 
