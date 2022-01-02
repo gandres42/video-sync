@@ -42,7 +42,9 @@
         let url = null;
         let buffer_action = null;
         let buffer_time = null;
-        setInterval(check_time_actions, 50);
+        let time = http_get();
+        console.log(time);
+        setInterval(check_time_actions, 1);
 
         database.ref('/rooms/').on('value', (snapshot) => {
             if (snapshot.val()[room] != null)
@@ -51,12 +53,14 @@
                 buffer_time = snapshot.val()[room].buffer_time;
                 console.log("do: " + buffer_action);
                 console.log("at: " + buffer_time);
+                console.log("now: " + time);
             }
         });
 
         function check_time_actions()
         {
-            if (buffer_time != -1 && buffer_action != -1 && Date.now() >= buffer_time)
+            time++;
+            if (buffer_time != -1 && buffer_action != -1 && time >= buffer_time)
             {
                 if (buffer_action == 'pause')
                 {
@@ -155,7 +159,7 @@
             {
                 database.ref('/rooms/' + room).update({
                     buffer_action: 'play',
-                    buffer_time: Date.now() + 1000
+                    buffer_time:  time + 200
                 })
             }
         }
@@ -166,9 +170,18 @@
             {
                 database.ref('/rooms/' + room).update({
                     buffer_action: 'pause',
-                    buffer_time: Date.now() + 750
+                    buffer_time: time + 200
                 })
             }
+        }
+
+        function http_get()
+        {
+            let theUrl = "http://worldtimeapi.org/api/timezone/America/Chicago";
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+            xmlHttp.send( null );
+            return JSON.parse(xmlHttp.responseText).unixtime;
         }
     </script>
 </body>
