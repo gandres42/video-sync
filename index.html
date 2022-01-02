@@ -2,6 +2,7 @@
 <html lang="en" id="document">
 <head>
     <meta charset="UTF-8">
+    <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
 </head>
 <body>
     <p id="code_display"></p>
@@ -44,10 +45,14 @@
             var url = null;
             var buffer_action = null;
             var buffer_time = null;
-            var time = http_get();
-            console.log(time);
+            var time = 0;
+            $.get("http://worldtimeapi.org/api/timezone/America/Chicago", function(data){
+                time = data.unixtime;
+                console.log(data.unixtime);
+            });
             setInterval(check_time_actions, 1);
         }
+
 
 
         database.ref('/rooms/').on('value', (snapshot) => {
@@ -184,7 +189,7 @@
             let theUrl = "http://worldtimeapi.org/api/timezone/America/Chicago";
             var xmlHttp = new XMLHttpRequest();
             xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
-            xmlHttp.send( null );
+            //xmlHttp.send( null );
             return JSON.parse(xmlHttp.responseText).unixtime;
         }
     </script>
