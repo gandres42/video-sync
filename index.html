@@ -68,7 +68,7 @@
             let start_time = Date.now();
             $.get("http://worldtimeapi.org/api/timezone/etc/UTC", function(data){
                 let end_time = Date.now();
-                net_epoch = new Date(data.datetime).getTime() + (end_time - start_time);
+                net_epoch = new Date(data.datetime).getTime();// + (end_time - start_time);
                 local_epoch = Date.now();
             });
         }
