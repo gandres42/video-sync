@@ -47,11 +47,9 @@
         let time = null;
         let local_epoch = null;
         let net_epoch = null;
-        let display = document.getElementById("time");
 
-        setInterval(local_time_iterate, 1);
         setInterval(net_time_iterate, 5000)
-        setInterval(check_time_actions, 100);
+        setInterval(check_time_actions, 1);
 
         database.ref('/rooms/').on('value', (snapshot) => {
             if (snapshot.val()[room] != null)
@@ -65,11 +63,6 @@
             }
         });
 
-        function local_time_iterate() {
-            time = net_epoch + (Date.now() - local_epoch);
-            display.innerHTML = time;
-        }
-
         function net_time_iterate()
         {
             let start_time = Date.now();
@@ -82,7 +75,7 @@
 
         function check_time_actions()
         {
-            display.innerHTML = time;
+            time = net_epoch + (Date.now() - local_epoch);
             if (time >= buffer_time)
             {
                 if (buffer_action == 'pause')
