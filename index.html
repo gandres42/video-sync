@@ -5,6 +5,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
 </head>
 <body>
+    <p id="time"></p>
     <p id="code_display"></p>
     <div>
         <button id="join" onclick="join_room(document.getElementById('code_input').value)">Join Room</button>
@@ -39,37 +40,50 @@
     </script>
 
     <script>
-        window.onload
-        {
-            var room = null;
-            var url = null;
-            var buffer_action = null;
-            var buffer_time = null;
-            var time = 0;
-            $.get("https://worldtimeapi.org/api/timezone/America/Chicago", function(data){
-                time = data.unixtime;
-                console.log(data.unixtime);
-            });
-            setInterval(check_time_actions, 1);
-        }
+        let room = null;
+        let url = null;
+        let buffer_action = null;
+        let buffer_time = null;
+        let time = null;
+        let local_epoch = null;
+        let net_epoch = null;
+        let display = document.getElementById("time");
 
-
+        setInterval(local_time_iterate, 1);
+        setInterval(net_time_iterate, 5000)
+        setInterval(check_time_actions, 100);
 
         database.ref('/rooms/').on('value', (snapshot) => {
             if (snapshot.val()[room] != null)
             {
                 buffer_action = snapshot.val()[room].buffer_action;
                 buffer_time = snapshot.val()[room].buffer_time;
+                console.log("////////////////////")
                 console.log("do: " + buffer_action);
-                console.log("at: " + buffer_time);
+                console.log("at:  " + buffer_time);
                 console.log("now: " + time);
             }
         });
 
+        function local_time_iterate() {
+            time = net_epoch + (Date.now() - local_epoch);
+            display.innerHTML = time;
+        }
+
+        function net_time_iterate()
+        {
+            let start_time = Date.now();
+            $.get("http://worldtimeapi.org/api/timezone/etc/UTC", function(data){
+                let end_time = Date.now();
+                net_epoch = new Date(data.datetime).getTime() + (end_time - start_time);
+                local_epoch = Date.now();
+            });
+        }
+
         function check_time_actions()
         {
-            time++;
-            if (buffer_time != -1 && buffer_action != -1 && time >= buffer_time)
+            display.innerHTML = time;
+            if (time >= buffer_time)
             {
                 if (buffer_action == 'pause')
                 {
@@ -168,8 +182,8 @@
             {
                 database.ref('/rooms/' + room).update({
                     buffer_action: 'play',
-                    buffer_time:  time + 200
-                })
+                    buffer_time:  time + 2500
+                });
             }
         }
 
@@ -179,18 +193,9 @@
             {
                 database.ref('/rooms/' + room).update({
                     buffer_action: 'pause',
-                    buffer_time: time + 200
-                })
+                    buffer_time: time + 2500
+                });
             }
-        }
-
-        function http_get()
-        {
-            let theUrl = "http://worldtimeapi.org/api/timezone/America/Chicago";
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
-            //xmlHttp.send( null );
-            return JSON.parse(xmlHttp.responseText).unixtime;
         }
     </script>
 </body>
