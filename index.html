@@ -6,7 +6,8 @@
 </head>
 <body>
     <p id="time"></p>
-    <p id="code_display"></p>
+    <p id="display_code"></p>
+    <p id="test_time"></p>
     <div>
         <button id="join" onclick="join_room(document.getElementById('code_input').value)">Join Room</button>
         <input id="code_input">
@@ -36,7 +37,6 @@
         // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-
     </script>
 
     <script>
@@ -44,11 +44,14 @@
         let url = null;
         let buffer_action = null;
         let buffer_time = null;
+        let buffer_seek = null;
         let time = null;
         let local_epoch = null;
         let net_epoch = null;
+        let display = document.getElementById('time');
 
-        setInterval(net_time_iterate, 5000)
+        net_time_iterate();
+        setInterval(net_time_iterate, 10000)
         setInterval(check_time_actions, 1);
 
         database.ref('/rooms/').on('value', (snapshot) => {
@@ -56,26 +59,32 @@
             {
                 buffer_action = snapshot.val()[room].buffer_action;
                 buffer_time = snapshot.val()[room].buffer_time;
+                buffer_seek = snapshot.val()[room].buffer_seek;
                 console.log("////////////////////")
                 console.log("do: " + buffer_action);
                 console.log("at:  " + buffer_time);
                 console.log("now: " + time);
+                console.log("timestamp: " + buffer_seek);
             }
         });
 
         function net_time_iterate()
         {
-            let start_time = Date.now();
-            $.get("http://worldtimeapi.org/api/timezone/etc/UTC", function(data){
-                let end_time = Date.now();
-                net_epoch = new Date(data.datetime).getTime();// + (end_time - start_time);
-                local_epoch = Date.now();
+            $.ajax({
+                url: 'https://worldtimeapi.org/api/timezone/etc/UTC',
+                method: 'GET',
+                start_time: new Date().getTime(),
+                complete: function(data) {
+                    net_epoch = Math.trunc(new Date(data.responseJSON.datetime).getTime() + ((new Date().getTime() - this.start_time)/2));
+                    local_epoch = new Date().getTime();
+                }
             });
         }
 
         function check_time_actions()
         {
-            time = net_epoch + (Date.now() - local_epoch);
+            time = net_epoch + (new Date().getTime() - local_epoch);
+            display.innerHTML = time;
             if (time >= buffer_time)
             {
                 if (buffer_action == 'pause')
@@ -83,12 +92,16 @@
                     player.pauseVideo();
                     buffer_action = -1;
                     buffer_time = -1;
+                    buffer_seek = -1;
                 }
-                else if (buffer_action == 'play')
+                if (buffer_action == 'play')
                 {
+                    //player.seekTo(buffer_seek, true);
+                    document.getElementById("test_time").innerHTML = time;
                     player.playVideo();
                     buffer_action = -1;
                     buffer_time = -1;
+                    buffer_seek = -1;
                 }
             }
         }
@@ -171,11 +184,13 @@
 
         function net_play()
         {
+            let seek = player.getCurrentTime();
             if (room != null)
             {
                 database.ref('/rooms/' + room).update({
                     buffer_action: 'play',
-                    buffer_time:  time + 2500
+                    buffer_time:  time + 4000,
+                    buffer_seek: seek
                 });
             }
         }
@@ -186,7 +201,8 @@
             {
                 database.ref('/rooms/' + room).update({
                     buffer_action: 'pause',
-                    buffer_time: time + 2500
+                    buffer_time: time + 4000,
+                    buffer_seek: -1
                 });
             }
         }
